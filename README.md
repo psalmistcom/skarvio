@@ -1,58 +1,76 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Skarvio starter: steps 1 to 3
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Customizable YouTube player SaaS. This overlay adds players CRUD with live
+preview, the public iframe embed, and the shared player runtime.
+Analytics, billing and plan limits come next.
 
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## 1. Create the project
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+laravel new skarvio      # pick the React starter kit (Inertia + React + Tailwind)
+cd skarvio
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## 2. Copy this zip over the project root
 
-## Contributing
+Unzip so `app/`, `routes/`, `resources/`, `database/` and `tests/` merge into
+the project. The zip only adds new files; it never overwrites starter-kit files.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 3. Make three small edits
 
-## Code of Conduct
+**a) `routes/web.php`: add at the bottom**
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```php
+require __DIR__.'/players.php';
+```
 
-## Security Vulnerabilities
+**b) `bootstrap/app.php`: register the cookie-less embed routes**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```php
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Support\Facades\Route;
 
-## License
+// inside ->withRouting(...) add a `then:` argument:
+    then: function () {
+        Route::middleware([SubstituteBindings::class])
+            ->group(base_path('routes/embed.php'));
+    },
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**c) `vite.config.ts`: add the embed bundle as an input**
+
+```ts
+laravel({
+    input: ['resources/css/app.css', 'resources/js/app.tsx', 'resources/js/embed/embed.js'],
+    // ...keep the rest of your options
+}),
+```
+
+## 4. Run it
+
+```bash
+php artisan migrate
+npm run dev            # or: npm run build
+php artisan serve
+php artisan test --filter=Player
+```
+
+Set `APP_URL` correctly in `.env`: it is baked into the embed snippet.
+
+Then open `/players`, create a player, copy the snippet into any HTML page.
+
+## Notes
+
+- Pages live in `resources/js/pages/players/` (lowercase, as the current starter
+  kit expects). If your starter uses `Pages/`, move the folder.
+- Pages use plain URLs and their own small layout (`layouts/players-layout.tsx`),
+  so they don't depend on starter-kit internals. Swap in `AppLayout` if you like.
+- The embed page is cached for 60 seconds (`Cache-Control`), so edits take up to
+  a minute to show on embedded sites.
+- Embed routes deliberately skip sessions, cookies and CSRF. Don't add
+  `web` middleware to them.
+- `runtime.js` already emits `impression`, `play`, `p25`, `p50`, `p75`,
+  `complete` and `cta_click`. Hook `onEvent` in `resources/js/embed/embed.js`
+  to a beacon endpoint when you build step 4.
+- Hiding YouTube's branding behind custom controls may conflict with YouTube's
+  terms. Get a proper read before charging money.
