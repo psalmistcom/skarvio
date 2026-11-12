@@ -18,7 +18,7 @@ class PlayerController extends Controller
         $players = Player::where('user_id', $request->user()->id)
             ->latest('updated_at')
             ->get()
-            ->map(fn (Player $p) => [
+            ->map(fn(Player $p) => [
                 'id' => $p->id,
                 'title' => $p->title,
                 'youtube_id' => $p->youtube_id,
@@ -32,7 +32,7 @@ class PlayerController extends Controller
     public function create(): Response
     {
         return Inertia::render('players/create', [
-            'defaults' => array_map(fn ($v) => $v ?? '', Player::settingsFrom([])),
+            'defaults' => array_map(fn($v) => $v ?? '', Player::settingsFrom([])),
         ]);
     }
 
@@ -55,7 +55,7 @@ class PlayerController extends Controller
         Gate::authorize('manage', $player);
 
         $settings = array_map(
-            fn ($v) => $v ?? '',
+            fn($v) => $v ?? '',
             array_merge(Player::settingsFrom([]), $player->settings ?? []),
         );
 
@@ -64,7 +64,7 @@ class PlayerController extends Controller
                 'id' => $player->id,
                 'title' => $player->title,
                 'youtube_id' => $player->youtube_id,
-                'youtube_url' => 'https://www.youtube.com/watch?v='.$player->youtube_id,
+                'youtube_url' => 'https://www.youtube.com/watch?v=' . $player->youtube_id,
                 'public_id' => $player->public_id,
                 'embed_url' => $player->embedUrl(),
                 'snippet' => $player->snippet(),
