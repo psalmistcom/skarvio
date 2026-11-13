@@ -37,7 +37,7 @@ use Illuminate\Support\Facades\Route;
     },
 ```
 
-**c) `vite.config.ts`: add the embed bundle as an input**
+**c) `vite.config.ts` (or `.js`): add the embed bundle as an input**
 
 ```ts
 laravel({
@@ -45,6 +45,22 @@ laravel({
     // ...keep the rest of your options
 }),
 ```
+
+**d) Inertia page resolver: only if your `resources/js/app.*` loads `.tsx` pages only**
+
+The React starter kit resolves `./pages/${name}.tsx`. Since these pages are `.jsx`,
+allow both extensions so the starter's own pages keep working:
+
+```js
+resolve: (name) =>
+    resolvePageComponent(
+        [`./pages/${name}.tsx`, `./pages/${name}.jsx`],
+        import.meta.glob('./pages/**/*.{tsx,jsx}'),
+    ),
+```
+
+If your project is already plain JS (`app.jsx` with `./pages/${name}.jsx`),
+skip this step.
 
 ## 4. Run it
 
@@ -61,8 +77,8 @@ Then open `/players`, create a player, copy the snippet into any HTML page.
 
 ## Notes
 
-- Pages live in `resources/js/pages/players/` (lowercase, as the current starter
-  kit expects). If your starter uses `Pages/`, move the folder.
+- The frontend is plain JSX (no TypeScript). Pages live in
+  `resources/js/pages/players/` (lowercase). If your project uses `Pages/`, move the folder.
 - Pages use plain URLs and their own small layout (`layouts/players-layout.tsx`),
   so they don't depend on starter-kit internals. Swap in `AppLayout` if you like.
 - The embed page is cached for 60 seconds (`Cache-Control`), so edits take up to
